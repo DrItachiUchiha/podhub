@@ -68,7 +68,7 @@ fun YoutubeAccountScreen(vm: MainViewModel, onBack: () -> Unit) {
     }) { pad ->
         if (browsing) {
             AndroidView(
-                modifier = Modifier.padding(pad).fillMaxSize(),
+                modifier = Modifier.padding(pad).consumeWindowInsets(pad).imePadding().fillMaxSize(),
                 factory = { c ->
                     WebView(c).apply {
                         // Google refuse souvent les navigateurs intégrés : on se présente comme Chrome sur PC.

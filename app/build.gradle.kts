@@ -15,8 +15,8 @@ android {
         applicationId = "app.podhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
         // yt-dlp/ffmpeg embarquent du natif : on limite aux architectures utiles.
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
     }

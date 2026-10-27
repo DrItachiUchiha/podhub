@@ -77,7 +77,7 @@ private const val SCAN_JS = """
 })()
 """
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun OdeonScreen(vm: MainViewModel, startUrl: String?, onBack: () -> Unit) {
@@ -156,7 +156,8 @@ fun OdeonScreen(vm: MainViewModel, startUrl: String?, onBack: () -> Unit) {
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            // Masqué pendant la saisie : il recouvrait le bas du formulaire de connexion.
+            if (!WindowInsets.isImeVisible) ExtendedFloatingActionButton(
                 onClick = { webView?.let(::scan); sheet = true },
                 icon = {
                     BadgedBox(badge = { if (found.isNotEmpty()) Badge { Text("${found.size}") } }) {
@@ -167,7 +168,9 @@ fun OdeonScreen(vm: MainViewModel, startUrl: String?, onBack: () -> Unit) {
             )
         },
     ) { pad ->
-        Box(Modifier.padding(pad).fillMaxSize()) {
+        // imePadding : l'appli est en plein écran (edge-to-edge), donc Android ne réduit plus la page
+        // quand le clavier s'ouvre ; sans ça le clavier cache les champs de connexion d'od3on.
+        Box(Modifier.padding(pad).consumeWindowInsets(pad).imePadding().fillMaxSize()) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
