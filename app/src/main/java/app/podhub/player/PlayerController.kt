@@ -70,7 +70,7 @@ class PlayerController(
         val ep = item.episode
         val local = ep.localPath?.let(::File)?.takeIf { it.exists() }
         // YouTube ne se lit qu'une fois converti en MP3.
-        if (local == null && item.podcast.type == SourceType.YOUTUBE) return@withContext PlayResult.NeedsDownload
+        if (local == null && Repository.mustDownloadFirst(item.podcast, ep.mediaUrl)) return@withContext PlayResult.NeedsDownload
 
         val uri = local?.let(Uri::fromFile) ?: Uri.parse(ep.mediaUrl)
         if (local == null) {

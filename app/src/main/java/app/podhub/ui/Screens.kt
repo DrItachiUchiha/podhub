@@ -184,6 +184,7 @@ private fun AddSourceDialog(
                     SourceType.RSS -> "Colle l'adresse du flux RSS du podcast."
                     SourceType.PATREON -> "Sur patreon.com : page du créateur → onglet « Audio » ou menu ⋯ → « Obtenir le lien RSS ». Copie ce lien privé ici. Ne le partage pas : il te donne accès à ton abonnement."
                     SourceType.YOUTUBE -> "Colle le lien d'une chaîne (youtube.com/@nom), d'une playlist ou d'une vidéo. Les vidéos sont converties en MP3 sur le téléphone. Astuce : « Partager » depuis l'appli YouTube vers PodHub marche aussi."
+                    SourceType.ODYSEE -> "Colle le lien d'une chaîne (odysee.com/@nom:x) pour recevoir ses nouvelles vidéos, ou d'une vidéo précise. Les vidéos sont converties en MP3 au téléchargement ; celles des chaînes peuvent aussi s'écouter en direct. « Partager » depuis l'appli Odysee vers PodHub marche aussi."
                     SourceType.ODEON -> "Od3on n'a pas de flux RSS. Ouvre od3on dans PodHub, connecte-toi, puis ouvre un post : le bouton en bas récupère l'audio de la page."
                 }
                 Text(help, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -195,7 +196,11 @@ private fun AddSourceDialog(
                 } else {
                     OutlinedTextField(
                         value = url, onValueChange = { url = it }, singleLine = true,
-                        label = { Text(if (type == SourceType.YOUTUBE) "Lien YouTube" else "URL du flux") },
+                        label = { Text(when (type) {
+                            SourceType.YOUTUBE -> "Lien YouTube"
+                            SourceType.ODYSEE -> "Lien Odysee"
+                            else -> "URL du flux"
+                        }) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -264,7 +269,7 @@ fun PodcastScreen(vm: MainViewModel, podcastId: Long, onBack: () -> Unit, onOpen
                     }
                     if (!app.podhub.data.Repository.isVirtual(p)) Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            if (p.type == SourceType.YOUTUBE) "Convertir les nouvelles vidéos en MP3 automatiquement"
+                            if (p.type.isVideo) "Convertir les nouvelles vidéos en MP3 automatiquement"
                             else "Télécharger les nouveaux épisodes automatiquement",
                             Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
                         Switch(checked = p.autoDownload, onCheckedChange = { vm.setAutoDownload(p, it) })

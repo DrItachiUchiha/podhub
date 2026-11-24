@@ -29,7 +29,11 @@ fun SourceType.icon(): ImageVector = when (this) {
     SourceType.PATREON -> Icons.Filled.Favorite
     SourceType.ODEON -> Icons.Filled.Language
     SourceType.YOUTUBE -> Icons.Filled.SmartDisplay
+    SourceType.ODYSEE -> Icons.Filled.OndemandVideo
 }
+
+/** Sources vidéo : l'épisode est converti en MP3 au téléchargement. */
+val SourceType.isVideo get() = this == SourceType.YOUTUBE || this == SourceType.ODYSEE
 
 fun formatDuration(ms: Long): String {
     if (ms <= 0) return ""
@@ -104,7 +108,7 @@ fun EpisodeRow(
         when (e.downloadState) {
             DownloadState.DONE -> Icon(Icons.Filled.DownloadDone, "Téléchargé", tint = MaterialTheme.colorScheme.primary)
             DownloadState.NONE, DownloadState.FAILED -> IconButton(onClick = onDownload) {
-                Icon(Icons.Outlined.Download, if (item.podcast.type == SourceType.YOUTUBE) "Convertir en MP3" else "Télécharger")
+                Icon(Icons.Outlined.Download, if (item.podcast.type.isVideo) "Convertir en MP3" else "Télécharger")
             }
             else -> Unit
         }

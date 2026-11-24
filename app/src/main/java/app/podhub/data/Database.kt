@@ -8,7 +8,8 @@ enum class SourceType(val label: String) {
     RSS("Flux RSS"),
     PATREON("Patreon"),
     ODEON("Od3on"),
-    YOUTUBE("YouTube");
+    YOUTUBE("YouTube"),
+    ODYSEE("Odysee");
 }
 
 enum class DownloadState { NONE, QUEUED, DOWNLOADING, DONE, FAILED }

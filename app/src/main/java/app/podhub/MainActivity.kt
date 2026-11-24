@@ -54,6 +54,7 @@ class MainActivity : ComponentActivity() {
                     when {
                         "od3on." in url -> nav.navigate("odeon?url=${Uri.encode(url)}")
                         "youtu" in url -> vm.addSource(SourceType.YOUTUBE, url, null, null) {}
+                        "odysee.com" in url -> vm.addSource(SourceType.ODYSEE, url, null, null) {}
                         else -> vm.addSource(SourceType.RSS, url, null, null) {}
                     }
                 }

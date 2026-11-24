@@ -1,6 +1,8 @@
 package app.podhub.data
 
 import android.content.Context
+import android.net.Uri
+import android.text.Html
 import app.podhub.PodHubApp
 import app.podhub.download.DownloadWorker
 import app.podhub.download.YoutubeAuth
@@ -30,6 +32,12 @@ class Repository(private val context: Context, val db: AppDatabase) {
     companion object {
         const val YT_SINGLES_URL = "podhub://youtube/videos"
         const val ODEON_LIBRARY_URL = "podhub://od3on/bibliotheque"
+        const val ODYSEE_SINGLES_URL = "podhub://odysee/videos"
+
+        /** Épisodes qu'il faut convertir en MP3 avant lecture (pas de fichier audio direct). */
+        fun mustDownloadFirst(p: Podcast, mediaUrl: String) =
+            p.type == SourceType.YOUTUBE || ".m3u8" in mediaUrl ||
+                (p.type == SourceType.ODYSEE && "/\$/rss/media/" !in mediaUrl)
         const val USER_AGENT =
             "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36"
 
@@ -52,6 +60,9 @@ class Repository(private val context: Context, val db: AppDatabase) {
             if (type == SourceType.YOUTUBE || YT_VIDEO.containsMatchIn(url) || "youtube.com/" in url) {
                 return@withContext addYoutube(url)
             }
+            if (type == SourceType.ODYSEE || "odysee.com/" in url) {
+                return@withContext addOdysee(url)
+            }
             db.podcasts().byUrl(url)?.let { return@withContext it.id }
             val probe = Podcast(type = type, title = "", feedUrl = url,
                 username = user?.takeIf { it.isNotBlank() }, password = pass?.takeIf { it.isNotBlank() })
@@ -65,6 +76,46 @@ class Repository(private val context: Context, val db: AppDatabase) {
             insertEpisodes(id, feed.episodes)
             id
         }
+
+    /**
+     * Odysee : une chaîne (odysee.com/@nom:x) s'abonne via son flux RSS officiel ($/rss/@nom:x) ;
+     * une vidéo (odysee.com/@nom:x/titre:y ou odysee.com/titre:y) va dans « Vidéos Odysee » et
+     * est convertie en MP3 par yt-dlp.
+     */
+    private suspend fun addOdysee(url: String): Long {
+        val segments = Uri.parse(if (url.startsWith("http")) url else "https://$url").pathSegments
+        if (segments.isEmpty()) throw IOException("Lien Odysee non reconnu : colle le lien d'une chaîne ou d'une vidéo")
+        val isFeed = segments.getOrNull(0) == "$" && segments.getOrNull(1) == "rss"
+        val isChannel = segments.size == 1 && segments[0].startsWith("@")
+        if (isFeed || isChannel) {
+            val channel = if (isFeed) segments[2] else segments[0]
+            val feedUrl = "https://odysee.com/\$/rss/$channel"
+            db.podcasts().byUrl(feedUrl)?.let { return it.id }
+            val probe = Podcast(type = SourceType.ODYSEE, title = "", feedUrl = feedUrl)
+            val feed = fetchFeed(probe)
+            val id = db.podcasts().insert(probe.copy(
+                title = feed.title.removeSuffix(" on Odysee"), description = feed.description, author = feed.author,
+                imageUrl = feed.imageUrl, lastRefreshed = System.currentTimeMillis(),
+            ))
+            insertEpisodes(id, feed.episodes)
+            return id
+        }
+        // Vidéo isolée
+        val pageUrl = url.substringBefore('?')
+        val lib = virtualPodcast(ODYSEE_SINGLES_URL, SourceType.ODYSEE, "Vidéos Odysee")
+        val html = runCatching { getText(pageUrl) }.getOrDefault("")
+        fun meta(prop: String) = Regex("""<meta property="og:$prop" content="([^"]*)"""").find(html)
+            ?.groupValues?.get(1)?.let { Html.fromHtml(it, Html.FROM_HTML_MODE_LEGACY).toString() }
+        val ep = ParsedEpisode(
+            guid = pageUrl, title = meta("title") ?: segments.last().substringBefore(':').replace('-', ' '),
+            description = pageUrl, pubDate = System.currentTimeMillis(), mediaUrl = pageUrl, durationMs = 0,
+            imageUrl = meta("image"),
+        )
+        insertEpisodes(lib.id, listOf(ep))
+        val epId = db.episodes().episodesOf(lib.id).first { it.guid == pageUrl }.id
+        DownloadWorker.enqueue(context, epId)
+        return lib.id
+    }
 
     private suspend fun addYoutube(url: String): Long {
         // Une vidéo isolée (sans playlist) => bibliothèque « Vidéos YouTube » + téléchargement MP3.

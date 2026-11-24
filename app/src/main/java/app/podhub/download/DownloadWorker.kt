@@ -61,8 +61,9 @@ class DownloadWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(c
                     ep.description?.takeIf { it.startsWith("http") }?.let { put("Referer", it) }
                 }
             }
-            // YouTube et les flux segmentés (HLS) passent par yt-dlp + ffmpeg, le reste en HTTP direct.
-            val file = if (p.type == SourceType.YOUTUBE || ".m3u8" in ep.mediaUrl) {
+            // YouTube, Odysee (vidéos : on ne garde que l'audio) et les flux HLS passent par
+            // yt-dlp + ffmpeg ; le reste en HTTP direct.
+            val file = if (p.type == SourceType.YOUTUBE || p.type == SourceType.ODYSEE || ".m3u8" in ep.mediaUrl) {
                 downloadWithYtDlp(id, ep.mediaUrl, ep.title, headers)
             } else {
                 downloadHttp(id, ep.mediaUrl, ep.title, headers)

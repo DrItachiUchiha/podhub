@@ -61,7 +61,9 @@ object FeedParser {
                             "enclosure" -> {
                                 val type = p.getAttributeValue(null, "type") ?: ""
                                 val url = p.getAttributeValue(null, "url")
-                                if (url != null && (cur.media == null || type.startsWith("audio"))) cur.media = url
+                                // Odysee publie aussi des articles (text/markdown) : on ne garde que l'audio/vidéo.
+                                val playable = !type.startsWith("text/") && !type.startsWith("image/")
+                                if (url != null && playable && (cur.media == null || type.startsWith("audio"))) cur.media = url
                             }
                             "link" -> {
                                 val href = p.getAttributeValue(null, "href")

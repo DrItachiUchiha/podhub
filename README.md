@@ -9,6 +9,7 @@ Appli Android perso pour centraliser ses podcasts : flux RSS, Patreon, YouTube (
 | **Flux RSS** | URL du flux, identifiants HTTP optionnels pour les flux privés. |
 | **Patreon** | Lien RSS privé fourni par Patreon (page du créateur → Audio / ⋯ → « Obtenir le lien RSS »). |
 | **YouTube** | Chaîne (`@nom`, `/channel/UC…`), playlist ou vidéo. Les chaînes/playlists sont suivies via le flux Atom officiel ; chaque vidéo est convertie en MP3 sur le téléphone (yt-dlp + ffmpeg). « Partager » depuis l'appli YouTube vers PodHub fonctionne aussi. |
+| **Odysee** | Chaîne (`odysee.com/@nom:x`) suivie via son flux RSS officiel (`odysee.com/$/rss/@nom:x`), écoute en streaming possible ; vidéo isolée ajoutée dans « Vidéos Odysee ». Téléchargement = audio extrait en MP3 par yt-dlp. |
 | **Od3on** | Pas de RSS ni d'API publics. Navigateur intégré : on se connecte, on ouvre un post, on lance la lecture, puis « Récupérer l'audio » capte le fichier (ou le flux HLS) et le télécharge avec la session. |
 
 ## Fonctions
